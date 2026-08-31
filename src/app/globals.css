@@ -1,26 +1,184 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  Design tokens. See project-brief.md §5.
+  Single accent, muted teal. Do not introduce the amber alternative anywhere.
+*/
+@theme {
+  --color-ink: #161b22; /* dark sections, footer, headings */
+  --color-canvas: #f6f4ef; /* warm off-white page background */
+  --color-graphite: #3a4048; /* body text on light backgrounds */
+  /*
+    Accent, adjusted from the brief's #3E8E7E for contrast. That hex measures
+    3.55:1 against the canvas, which fails WCAG AA (4.5:1) both as link text
+    and as the quote button's fill behind canvas-coloured text, i.e. the
+    primary CTA on every page. Same teal hue, taken darker until it passes.
+
+      --color-accent        5.34:1 on canvas
+      --color-accent-hover  6.68:1 on canvas
+      --color-accent-on-ink 7.56:1 on ink (dark sections, where the dark
+                            teal above would drop to 2.95:1)
+  */
+  --color-accent: #306f62; /* links, quote button, one hero layer */
+  --color-accent-hover: #2a5f53;
+  --color-accent-on-ink: #6fb9a7; /* accent text on dark sections only */
+  --color-hairline: #dad5c9; /* dividers, card borders */
+  --color-muted: #646a75; /* captions, secondary labels, 4.95:1 on canvas */
+
+  /* Type scale: 16px base, 1.25 modular ratio */
+  --text-sm: 0.8rem;
+  --text-sm--line-height: 1.5;
+  --text-base: 1rem;
+  --text-base--line-height: 1.65;
+  --text-lg: 1.25rem;
+  --text-lg--line-height: 1.5;
+  --text-xl: 1.5625rem;
+  --text-xl--line-height: 1.35;
+  --text-2xl: 1.9531rem;
+  --text-2xl--line-height: 1.25;
+  --text-3xl: 2.4414rem;
+  --text-3xl--line-height: 1.15;
+  --text-4xl: 3.0518rem;
+  --text-4xl--line-height: 1.08;
+  --text-5xl: 3.8147rem;
+  --text-5xl--line-height: 1.03;
 }
 
+/* Fonts are injected by next/font in layout.tsx as --font-inter / --font-space-grotesk. */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-space-grotesk), var(--font-inter), ui-sans-serif,
+    system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-graphite);
+    font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-space-grotesk), var(--font-inter), ui-sans-serif,
+      system-ui, sans-serif;
+    color: var(--color-ink);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+}
+
+/*
+  Brief §7: visible keyboard focus on every interactive element.
+
+  Two things here are deliberate and worth not "tidying" away:
+
+  1. Unlayered, not inside @layer base. Unlayered declarations beat every
+     layered one, so this does not depend on how Tailwind orders its layers.
+  2. Literal hex, not var(--color-accent). Keep these in step with the accent
+     tokens above by hand.
+
+  The 3px offset matters for the quote button, which is itself accent
+  coloured, so the ring sits on the canvas around it, not on the fill.
+
+  Filled controls (accent buttons, the dark hero stack layers) additionally
+  carry a focus-visible:outline-[...] utility in their own markup. Their text
+  is canvas coloured, so a ring that fell back to currentColor would be drawn
+  canvas-on-canvas and be invisible, on the site's primary CTA. The utility
+  makes the ring colour explicit at the element rather than relying on this
+  rule alone.
+*/
+:focus-visible {
+  outline-width: 2px;
+  outline-style: solid;
+  outline-color: #306f62;
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* On the ink sections the light-background ring drops to 2.95:1. */
+.bg-ink :focus-visible {
+  outline-color: #6fb9a7;
+}
+
+/*
+  The one page-load animation in the whole site (brief §5): the hero stack
+  assembling. Delay is set per layer inline. `both` fill mode matters because it
+  keeps the final state applied when the reduced-motion rule below collapses
+  the duration to near-zero, so the layers still end up visible.
+*/
+@keyframes stack-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+.stack-layer {
+  animation: stack-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/*
+  Scroll reveal, via CSS scroll-driven animation. No JavaScript, no observer.
+
+  Two guards are load-bearing. `opacity: 0` appears only inside both of them,
+  so a browser without animation-timeline, or a visitor who asked for reduced
+  motion, never receives the hidden state and simply sees the content.
+
+  Both ends of animation-range MUST use the same phase. An earlier attempt
+  used `entry 8% cover 24%`; at these element sizes the end resolved before
+  the start, giving a range that never progresses and leaving every revealed
+  element stuck invisible. A blank page is a far worse failure than a missing
+  fade, so if you change these numbers, re-check by scrolling the whole page.
+
+  Coverage note: this animates in Chromium-based browsers. Safari and Firefox
+  without animation-timeline support fall through the @supports guard and
+  render everything statically: correct, just not animated.
+*/
+@keyframes reveal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal {
+      opacity: 0;
+      animation: reveal-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 55%;
+    }
+  }
+}
+
+/*
+  Brief §7: the hero stack animation is the only page-load motion,
+  and it must not run for people who ask for reduced motion.
+*/
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
