@@ -94,3 +94,15 @@ export function validateQuote(values: QuoteFormValues): QuoteErrors {
 
   return errors;
 }
+
+/*
+  Turns a stored option value back into the label a person chose, so the
+  notification email reads "I have one, but it's outdated" rather than
+  "outdated". Falls back to the raw value if an option is ever removed.
+*/
+export function labelFor(
+  options: readonly { value: string; label: string }[],
+  value: string,
+): string {
+  return options.find((option) => option.value === value)?.label ?? value;
+}

@@ -1,24 +1,30 @@
 import { NextResponse } from "next/server";
-import { emptyQuote, validateQuote, type QuoteFormValues } from "@/lib/quote";
+import {
+  BUDGET_OPTIONS,
+  INTEREST_OPTIONS,
+  SITUATION_OPTIONS,
+  TIMELINE_OPTIONS,
+  emptyQuote,
+  labelFor,
+  validateQuote,
+  type QuoteFormValues,
+} from "@/lib/quote";
 
 /*
-  ⚠️  NOT YET CONNECTED TO ANYTHING.
+  Delivers quote requests to Formspree, which emails them on.
 
-  This handler validates a submission and logs it to the server console. It
-  does NOT deliver it anywhere. Do not put this site in front of real traffic
-  until the marked section below actually sends the enquiry. Otherwise every
-  quote request is silently dropped while the visitor is told it went through.
+  The rule this file exists to enforce: there is no code path that returns
+  success without the enquiry having actually been delivered. An earlier
+  version validated, logged, and returned ok, so every submission was lost
+  while the visitor was told it went through. If delivery fails now, or the
+  form id is missing, this returns an error and the form shows its error
+  state.
 
-  Brief §8 leaves the choice open. Whichever you pick, it is this one function:
-
-    • Formspree      POST to https://formspree.io/f/<id> with the payload
-    • Resend / email  await resend.emails.send({ to, subject, text })
-    • Google Sheet   POST to an Apps Script web app URL
-
-  Keep the endpoint or API key in an env var, never inline here.
+  Configuration: FORMSPREE_FORM_ID, set in .env.local locally and in Vercel's
+  Environment Variables for the deployed site. It is the last path segment of
+  the endpoint Formspree gives you.
 */
 
-/* Cheap guard against a bot pasting a megabyte into the notes box. */
 const MAX_FIELD_LENGTH = 5000;
 
 function coerce(body: unknown): QuoteFormValues {
@@ -41,6 +47,31 @@ function coerce(body: unknown): QuoteFormValues {
   };
 }
 
+/* Values are stored as ids; the email should read the way the person answered. */
+function toEmailFields(values: QuoteFormValues) {
+  return {
+    name: values.name,
+    email: values.email,
+    business: values.businessName || "Not given",
+    situation: labelFor(SITUATION_OPTIONS, values.situation),
+    timeline: values.timeline
+      ? labelFor(TIMELINE_OPTIONS, values.timeline)
+      : "No preference",
+    budget: values.budget
+      ? labelFor(BUDGET_OPTIONS, values.budget)
+      : "Rather not say",
+    "also interested in": values.interests.length
+      ? values.interests
+          .map((value) => labelFor(INTEREST_OPTIONS, value))
+          .join(" / ")
+      : "Nothing else ticked",
+    notes: values.notes || "Nothing added",
+    /* Formspree reads _subject for the notification subject line, and uses
+       the `email` field above as the reply-to, so replying goes to the client. */
+    _subject: `Quote request from ${values.name || "someone"}`,
+  };
+}
+
 export async function POST(request: Request) {
   let body: unknown;
   try {
@@ -51,19 +82,53 @@ export async function POST(request: Request) {
 
   const values = coerce(body);
 
-  /* Re-validated server-side: the client checks are for feedback, not trust. */
+  /* Re-validated server side: the client checks are for feedback, not trust. */
   const errors = validateQuote(values);
   if (Object.keys(errors).length > 0) {
     return NextResponse.json({ errors }, { status: 422 });
   }
 
-  // ---------------------------------------------------------------
-  // TODO: deliver the enquiry here. Until this exists, nothing is sent.
-  // ---------------------------------------------------------------
-  console.info("[quote] submission received (not delivered):", {
-    ...values,
-    email: "<redacted in log>",
-  });
+  const formId = process.env.FORMSPREE_FORM_ID;
+  if (!formId) {
+    console.error(
+      "[quote] FORMSPREE_FORM_ID is not set. Enquiry NOT delivered.",
+    );
+    return NextResponse.json(
+      { error: "Form is not configured." },
+      { status: 500 },
+    );
+  }
 
-  return NextResponse.json({ ok: true });
+  try {
+    const response = await fetch(`https://formspree.io/f/${formId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        /* Without this Formspree replies with a redirect to its own thank-you
+           page instead of JSON. */
+        Accept: "application/json",
+      },
+      body: JSON.stringify(toEmailFields(values)),
+    });
+
+    if (!response.ok) {
+      const detail = await response.text();
+      console.error("[quote] Formspree rejected the submission:", {
+        status: response.status,
+        detail: detail.slice(0, 500),
+      });
+      return NextResponse.json(
+        { error: "Could not send that enquiry." },
+        { status: 502 },
+      );
+    }
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error("[quote] Could not reach Formspree:", error);
+    return NextResponse.json(
+      { error: "Could not send that enquiry." },
+      { status: 502 },
+    );
+  }
 }
