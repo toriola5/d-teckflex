@@ -1,5 +1,6 @@
 /*
-  Copy is verbatim from project-brief.md §6, marked there as final.
+  Copy is from project-brief.md §6, with one change: David asked for the MSc
+  in Data Science to be removed, so don't restore it from the brief.
 
   Note the employer is intentionally "a UK organisation": the brief keeps this
   brand separate from David's day job. Do not substitute a real employer name
@@ -37,12 +38,11 @@ export default function AboutDavid() {
             </p>
             <p className="max-w-[68ch]">
               My background spans quality assurance, data analysis, and
-              full-stack development. I hold an MSc in Data Science and have led
-              quality monitoring and process improvement work for a UK
-              organisation, alongside freelance web development and analytics
-              projects for clients through Fiverr, building dashboards,
-              automating reporting, and developing responsive web applications
-              with React and Node.js.
+              full-stack development. I have led quality monitoring and process
+              improvement work for a UK organisation, alongside freelance web
+              development and analytics projects for clients through Fiverr,
+              building dashboards, automating reporting, and developing
+              responsive web applications with React and Node.js.
             </p>
             <p className="max-w-[68ch]">
               I like solving real problems: turning messy data into a dashboard
