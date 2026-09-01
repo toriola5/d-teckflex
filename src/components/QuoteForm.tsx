@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import {
   BUDGET_OPTIONS,
   INTEREST_OPTIONS,
@@ -11,6 +11,13 @@ import {
   type QuoteErrors,
   type QuoteFormValues,
 } from "@/lib/quote";
+import {
+  deadlineLabel,
+  msRemaining,
+  offer,
+  spotsLabel,
+  spotsOpen,
+} from "@/lib/offer";
 
 /*
   The single conversion point, embedded on every page (brief §2/§3). Not a
@@ -30,6 +37,11 @@ const fieldBase =
   type on every render, so React would unmount and remount the message rather
   than update it, which also re-fires role="alert" and re-announces it.
 */
+function subscribeToClock(onChange: () => void) {
+  const id = window.setInterval(onChange, 30_000);
+  return () => window.clearInterval(id);
+}
+
 function FieldError({ id, message }: { id: string; message?: string }) {
   if (!message) return null;
   return (
@@ -46,6 +58,23 @@ export default function QuoteForm() {
   const [status, setStatus] = useState<
     "idle" | "submitting" | "success" | "error"
   >("idle");
+  /*
+    Whether the free-spot checkbox should show. The pages are static, so a
+    server-side expiry check would be frozen at build time and the checkbox
+    would still be here long after the offer closed.
+
+    useSyncExternalStore rather than an effect: it takes a separate server
+    snapshot, so the server can render the offer as live and the browser can
+    correct it without a hydration mismatch and without a setState cascade.
+    It also re-checks on the interval, so the checkbox disappears if someone
+    has the page open when the deadline passes.
+  */
+  const offerLive = useSyncExternalStore(
+    subscribeToClock,
+    () => offer.enabled && spotsOpen() && msRemaining() > 0,
+    () => offer.enabled && spotsOpen(),
+  );
+
   const errorSummaryRef = useRef<HTMLParagraphElement>(null);
   const successRef = useRef<HTMLDivElement>(null);
 
@@ -349,6 +378,34 @@ export default function QuoteForm() {
                 ))}
               </div>
             </fieldset>
+
+            {offerLive && (
+              <div className="border border-accent bg-accent/5 p-5">
+                <label
+                  htmlFor={`${formId}-free-offer`}
+                  className="flex cursor-pointer items-start gap-3"
+                >
+                  <input
+                    id={`${formId}-free-offer`}
+                    type="checkbox"
+                    name="freeOffer"
+                    checked={values.freeOffer}
+                    onChange={(e) => update("freeOffer", e.target.checked)}
+                    className="mt-0.5 size-4 shrink-0 accent-accent"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-ink">
+                      {offer.formLabel}
+                    </span>
+                    <span className="mt-1 block max-w-[56ch] text-sm text-muted">
+                      Free of charge, in exchange for permission to show the
+                      finished work in my portfolio. {spotsLabel()}, closing{" "}
+                      {deadlineLabel()}.
+                    </span>
+                  </span>
+                </label>
+              </div>
+            )}
 
             <div>
               <label

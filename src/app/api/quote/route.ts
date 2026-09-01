@@ -41,6 +41,7 @@ function coerce(body: unknown): QuoteFormValues {
     timeline: text(raw.timeline),
     budget: text(raw.budget),
     notes: text(raw.notes),
+    freeOffer: raw.freeOffer === true,
     interests: Array.isArray(raw.interests)
       ? raw.interests.filter((item): item is string => typeof item === "string")
       : [],
@@ -66,9 +67,14 @@ function toEmailFields(values: QuoteFormValues) {
           .join(" / ")
       : "Nothing else ticked",
     notes: values.notes || "Nothing added",
+    "free build request": values.freeOffer ? "YES" : "No",
     /* Formspree reads _subject for the notification subject line, and uses
        the `email` field above as the reply-to, so replying goes to the client. */
-    _subject: `Quote request from ${values.name || "someone"}`,
+    /* Flagged in the subject too: a free-build request is time-limited and
+       should not be missed in a list of enquiries. */
+    _subject: values.freeOffer
+      ? `FREE BUILD request from ${values.name || "someone"}`
+      : `Quote request from ${values.name || "someone"}`,
   };
 }
 

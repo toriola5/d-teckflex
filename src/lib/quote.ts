@@ -14,6 +14,8 @@ export type QuoteFormValues = {
   budget: string;
   interests: string[];
   notes: string;
+  /* Set when the visitor asks to be considered for a free build. */
+  freeOffer: boolean;
 };
 
 export const emptyQuote: QuoteFormValues = {
@@ -25,6 +27,7 @@ export const emptyQuote: QuoteFormValues = {
   budget: "",
   interests: [],
   notes: "",
+  freeOffer: false,
 };
 
 /*

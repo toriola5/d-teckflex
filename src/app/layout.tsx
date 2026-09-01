@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Space_Grotesk } from "next/font/google";
+import FreeWorkBanner from "@/components/FreeWorkBanner";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import "./globals.css";
@@ -43,6 +44,7 @@ export default function RootLayout({
         >
           Skip to content
         </a>
+        <FreeWorkBanner />
         <SiteHeader />
         {children}
         <SiteFooter />
