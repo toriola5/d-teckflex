@@ -58,9 +58,14 @@ function toEmailFields(values: QuoteFormValues) {
     timeline: values.timeline
       ? labelFor(TIMELINE_OPTIONS, values.timeline)
       : "No preference",
-    budget: values.budget
-      ? labelFor(BUDGET_OPTIONS, values.budget)
-      : "Rather not say",
+    /* The form hides the budget field for a free build, so reporting
+       "Rather not say" here would misrepresent an unanswered question as a
+       declined one. */
+    budget: values.freeOffer
+      ? "Not applicable, free build request"
+      : values.budget
+        ? labelFor(BUDGET_OPTIONS, values.budget)
+        : "Rather not say",
     "also interested in": values.interests.length
       ? values.interests
           .map((value) => labelFor(INTEREST_OPTIONS, value))

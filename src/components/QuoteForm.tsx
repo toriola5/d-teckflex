@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import {
   BUDGET_OPTIONS,
   INTEREST_OPTIONS,
@@ -302,7 +308,50 @@ export default function QuoteForm() {
               />
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2">
+            {offerLive && (
+              <div className="border border-accent bg-accent/5 p-5">
+                <label
+                  htmlFor={`${formId}-free-offer`}
+                  className="flex cursor-pointer items-start gap-3"
+                >
+                  <input
+                    id={`${formId}-free-offer`}
+                    type="checkbox"
+                    name="freeOffer"
+                    checked={values.freeOffer}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      /* Clear any budget already picked, so a stale figure
+                         cannot ride along with a free build request. */
+                      setValues((prev) => ({
+                        ...prev,
+                        freeOffer: checked,
+                        budget: checked ? "" : prev.budget,
+                      }));
+                    }}
+                    className="mt-0.5 size-4 shrink-0 accent-accent"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium text-ink">
+                      {offer.formLabel}
+                    </span>
+                    <span className="mt-1 block max-w-[56ch] text-sm text-muted">
+                      Free of charge, in exchange for permission to show the
+                      finished work in my portfolio. {spotsLabel()}, closing{" "}
+                      {deadlineLabel()}.
+                    </span>
+                  </span>
+                </label>
+              </div>
+            )}
+
+            {/* Single column when the budget field is hidden, so the
+                timeline select does not sit next to an empty gap. */}
+            <div
+              className={`grid gap-6 ${
+                values.freeOffer ? "" : "sm:grid-cols-2"
+              }`}
+            >
               <div>
                 <label
                   htmlFor={`${formId}-timeline`}
@@ -326,28 +375,31 @@ export default function QuoteForm() {
                 </select>
               </div>
 
-              <div>
-                <label
-                  htmlFor={`${formId}-budget`}
-                  className="block text-sm font-medium text-ink"
-                >
-                  Budget range
-                </label>
-                <select
-                  id={`${formId}-budget`}
-                  name="budget"
-                  value={values.budget}
-                  onChange={(e) => update("budget", e.target.value)}
-                  className={`mt-2 ${fieldBase}`}
-                >
-                  <option value="">Rather not say</option>
-                  {BUDGET_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              {/* A free build has no budget to state, so asking is noise. */}
+              {!values.freeOffer && (
+                <div>
+                  <label
+                    htmlFor={`${formId}-budget`}
+                    className="block text-sm font-medium text-ink"
+                  >
+                    Budget range
+                  </label>
+                  <select
+                    id={`${formId}-budget`}
+                    name="budget"
+                    value={values.budget}
+                    onChange={(e) => update("budget", e.target.value)}
+                    className={`mt-2 ${fieldBase}`}
+                  >
+                    <option value="">Rather not say</option>
+                    {BUDGET_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <fieldset className="border-t border-hairline pt-6">
@@ -378,34 +430,6 @@ export default function QuoteForm() {
                 ))}
               </div>
             </fieldset>
-
-            {offerLive && (
-              <div className="border border-accent bg-accent/5 p-5">
-                <label
-                  htmlFor={`${formId}-free-offer`}
-                  className="flex cursor-pointer items-start gap-3"
-                >
-                  <input
-                    id={`${formId}-free-offer`}
-                    type="checkbox"
-                    name="freeOffer"
-                    checked={values.freeOffer}
-                    onChange={(e) => update("freeOffer", e.target.checked)}
-                    className="mt-0.5 size-4 shrink-0 accent-accent"
-                  />
-                  <span>
-                    <span className="block text-sm font-medium text-ink">
-                      {offer.formLabel}
-                    </span>
-                    <span className="mt-1 block max-w-[56ch] text-sm text-muted">
-                      Free of charge, in exchange for permission to show the
-                      finished work in my portfolio. {spotsLabel()}, closing{" "}
-                      {deadlineLabel()}.
-                    </span>
-                  </span>
-                </label>
-              </div>
-            )}
 
             <div>
               <label
