@@ -66,13 +66,6 @@ export default function FreeWorkBanner() {
         </div>
 
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-          <p className="border border-graphite px-3 py-1.5 text-sm text-hairline">
-            <span className="font-display text-accent-on-ink">
-              {offer.places.remaining}
-            </span>{" "}
-            of {offer.places.total} spaces left
-          </p>
-
           <p className="text-sm text-hairline">
             <span className="sr-only">
               {spotsLabel()}. This offer closes on {deadlineLabel()}.
@@ -86,13 +79,21 @@ export default function FreeWorkBanner() {
               </span>
             )}
           </p>
+          <div>
+            <p className="border border-graphite px-3 py-1.5 text-sm text-hairline">
+              <span className="font-display text-accent-on-ink">
+                {offer.places.remaining}
+              </span>{" "}
+              of {offer.places.total} spaces left
+            </p>
 
-          <Link
-            href={offer.ctaHref}
-            className="bg-accent-on-ink px-4 py-2 text-sm font-medium text-ink transition-opacity hover:opacity-90 focus-visible:outline-[#f6f4ef]"
-          >
-            {offer.ctaLabel}
-          </Link>
+            <Link
+              href={offer.ctaHref}
+              className="bg-accent-on-ink px-4 py-2 text-sm font-medium text-ink transition-opacity hover:opacity-90 focus-visible:outline-[#f6f4ef]"
+            >
+              {offer.ctaLabel}
+            </Link>
+          </div>
         </div>
       </div>
     </aside>
