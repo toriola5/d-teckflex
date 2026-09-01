@@ -4,7 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import {
   BUDGET_OPTIONS,
   INTEREST_OPTIONS,
-  SITUATION_OPTIONS,
+  SITUATION_GROUPS,
   TIMELINE_OPTIONS,
   emptyQuote,
   validateQuote,
@@ -244,7 +244,7 @@ export default function QuoteForm() {
                 htmlFor={`${formId}-situation`}
                 className="block text-sm font-medium text-ink"
               >
-                Where are you starting from? <span aria-hidden="true">*</span>
+                What do you need help with? <span aria-hidden="true">*</span>
               </label>
               <select
                 id={`${formId}-situation`}
@@ -257,10 +257,14 @@ export default function QuoteForm() {
                 {...errorProps("situation")}
               >
                 <option value="">Choose one…</option>
-                {SITUATION_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
+                {SITUATION_GROUPS.map((group) => (
+                  <optgroup key={group.label} label={group.label}>
+                    {group.options.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
               <FieldError

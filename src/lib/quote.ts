@@ -27,11 +27,43 @@ export const emptyQuote: QuoteFormValues = {
   notes: "",
 };
 
-export const SITUATION_OPTIONS = [
-  { value: "no-site", label: "I don't have a website yet" },
-  { value: "outdated", label: "I have one, but it's outdated" },
-  { value: "rebuild", label: "I need an existing site rebuilt" },
-] as const;
+/*
+  Grouped, because the form appears on every service page. The original three
+  options were website-only (brief §4, written when the site led with website
+  development alone), which left anyone arriving from the Microsoft 365 or
+  Data Analytics page with nothing that described them.
+
+  Website options stay first: it is still the most common way in.
+*/
+export const SITUATION_GROUPS = [
+  {
+    label: "A website",
+    options: [
+      { value: "no-site", label: "I don't have a website yet" },
+      { value: "outdated", label: "I have one, but it's outdated" },
+      { value: "rebuild", label: "I need an existing site rebuilt" },
+    ],
+  },
+  {
+    label: "Something else",
+    options: [
+      { value: "m365", label: "I need business email set up properly" },
+      { value: "data", label: "I need to make sense of my business data" },
+      { value: "systems", label: "I need existing systems cleaned up" },
+    ],
+  },
+  {
+    label: "Not sure",
+    options: [
+      { value: "unsure", label: "Something else, or I'm not sure yet" },
+    ],
+  },
+];
+
+/* Flat view, for validation and for turning a stored value back into a label. */
+export const SITUATION_OPTIONS = SITUATION_GROUPS.flatMap(
+  (group) => group.options,
+);
 
 export const TIMELINE_OPTIONS = [
   { value: "asap", label: "As soon as possible" },
@@ -89,7 +121,7 @@ export function validateQuote(values: QuoteFormValues): QuoteErrors {
   }
 
   if (!values.situation) {
-    errors.situation = "Please pick the option closest to your situation.";
+    errors.situation = "Please pick the option closest to what you need.";
   }
 
   return errors;

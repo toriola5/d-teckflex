@@ -53,7 +53,7 @@ function toEmailFields(values: QuoteFormValues) {
     name: values.name,
     email: values.email,
     business: values.businessName || "Not given",
-    situation: labelFor(SITUATION_OPTIONS, values.situation),
+    "looking for": labelFor(SITUATION_OPTIONS, values.situation),
     timeline: values.timeline
       ? labelFor(TIMELINE_OPTIONS, values.timeline)
       : "No preference",
