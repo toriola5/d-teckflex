@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import FreeWorkBanner from "@/components/FreeWorkBanner";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -33,10 +34,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="en-GB"
-      className={`${inter.variable} ${spaceGrotesk.variable}`}
-    >
+    <html lang="en-GB" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="min-h-screen">
         <a
           href="#main"
@@ -47,6 +45,7 @@ export default function RootLayout({
         <FreeWorkBanner />
         <SiteHeader />
         {children}
+        <Analytics />
         <SiteFooter />
       </body>
     </html>
