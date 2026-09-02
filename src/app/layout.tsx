@@ -4,6 +4,7 @@ import FreeWorkBanner from "@/components/FreeWorkBanner";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 
 const inter = Inter({
@@ -46,6 +47,7 @@ export default function RootLayout({
         <SiteHeader />
         {children}
         <Analytics />
+        <SpeedInsights />
         <SiteFooter />
       </body>
     </html>
